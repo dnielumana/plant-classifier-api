@@ -1,16 +1,16 @@
 from fastapi import FastAPI, UploadFile, File
-from PIL import Image
-import io
-import torchvision.transforms as transforms
-from model import model, predict
+from redis import Redis
+from rq import Queue
+from rq.job import Job
+
+from tasks import classify_task
+
 
 app = FastAPI()
 
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
+redis_conn = Redis()
+queue = Queue(connection=redis_conn)
+
 
 @app.get("/") #when sends GET, run fuction
 def root():
@@ -19,7 +19,16 @@ def root():
 @app.post("/classify")
 async def classify(file: UploadFile = File(...)):
     image_bytes = await file.read()
-    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    tensor = transform(image)
-    prediction = predict(tensor)
-    return {"prediction": prediction}
+    job = queue.enqueue(classify_task, image_bytes)
+    return {"job_id": job.id}
+
+@app.get("/jobs/{job_id}")
+def get_job_status(job_id: str):
+    job = Job.fetch(job_id, connection=redis_conn)
+    if job.is_finished:
+        return {"status": "finished", "result": job.result}
+    elif job.is_failed:
+        return {"status": "failed"}
+    else:
+        return {"status": job.get_status()}
+
