@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, UploadFile, File
 from redis import Redis
 from rq import Queue
@@ -10,7 +11,7 @@ from database import SessionLocal, JobRecord
 
 app = FastAPI()
 
-redis_conn = Redis()
+redis_conn = Redis(host=os.environ.get("REDIS_HOST", "localhost"))
 queue = Queue(connection=redis_conn)
 
 

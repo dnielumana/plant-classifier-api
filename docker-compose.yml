@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: plant_classifier
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres@postgres:5432/plant_classifier
+      REDIS_HOST: redis
+    depends_on:
+      - redis
+      - postgres
+  
+  worker:
+    build: .
+    command: python worker.py
+    environment:
+      DATABASE_URL: postgresql://postgres@postgres:5432/plant_classifier
+      REDIS_HOST: redis
+    depends_on:
+      - redis
+      - postgres

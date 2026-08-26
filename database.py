@@ -1,8 +1,9 @@
+import os
 from sqlalchemy import create_engine, Column, String, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 
-DATABASE_URL = "postgresql://localhost/plant_classifier"
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/plant_classifier")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
