@@ -39,7 +39,7 @@ resource "aws_security_group" "api_sg" {
 
 resource "aws_instance" "api_server" {
     ami           = "ami-0fe74bfcad4fd6bd2"
-    instance_type = "t3.micro"
+    instance_type = "t3.small"
     vpc_security_group_ids = [aws_security_group.api_sg.id]
     key_name = aws_key_pair.deploy_key.key_name
 
